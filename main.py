@@ -1,9 +1,26 @@
-from collections.abc import Iterable
+import requests
+from dotenv import dotenv_values
+from requests.auth import HTTPBasicAuth
+import json
 
-def greet(names: Iterable[str]) -> str | None:
-    for name in names:
-        print(name)
+env = dotenv_values(".env")
+OXY_USERNAME = env['OXY_USERNAME']
+OXY_PASSWORD = env['OXY_PASSWORD']
 
-    return None
+if (type(OXY_USERNAME) is not str or type(OXY_PASSWORD) is not str):
+    raise Exception('Oxylabs credentials not found. Add them to your .env file!')
 
-greet('1234')
+search_text = "vodka"
+
+url = "https://realtime.oxylabs.io/v1/queries"
+headers = {
+    "Content-Type": "application/json",
+}
+payload = {
+    "source": "universal_ecommerce",
+    "url": f"https://www.klwines.com/Products?searchText={search_text}",
+}
+
+response = requests.post(url, auth=HTTPBasicAuth(OXY_USERNAME, OXY_PASSWORD), headers=headers, data=json.dumps(payload))
+
+print(response.text)
