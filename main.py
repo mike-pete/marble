@@ -1,14 +1,14 @@
+import json
 import requests
 from dotenv import dotenv_values
 from requests.auth import HTTPBasicAuth
-import json
 
 env = dotenv_values(".env")
-OXY_USERNAME = env['OXY_USERNAME']
-OXY_PASSWORD = env['OXY_PASSWORD']
+OXY_USERNAME = env["OXY_USERNAME"]
+OXY_PASSWORD = env["OXY_PASSWORD"]
 
-if (type(OXY_USERNAME) is not str or type(OXY_PASSWORD) is not str):
-    raise Exception('Oxylabs credentials not found. Add them to your .env file!')
+if type(OXY_USERNAME) is not str or type(OXY_PASSWORD) is not str:
+    raise Exception("Oxylabs credentials not found. Add them to your .env file!")
 
 search_text = "vodka"
 
@@ -21,6 +21,11 @@ payload = {
     "url": f"https://www.klwines.com/Products?searchText={search_text}",
 }
 
-response = requests.post(url, auth=HTTPBasicAuth(OXY_USERNAME, OXY_PASSWORD), headers=headers, data=json.dumps(payload))
+response = requests.post(
+    url,
+    auth=HTTPBasicAuth(OXY_USERNAME, OXY_PASSWORD),
+    headers=headers,
+    data=json.dumps(payload),
+)
 
 print(response.text)
