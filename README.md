@@ -28,3 +28,9 @@ run mypy:
 `mypy main.py --strict`
 
 `pip freeze > requirements.txt`
+
+
+
+`ruff check`
+
+`ruff format`
