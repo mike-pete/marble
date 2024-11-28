@@ -17,6 +17,9 @@ you might want to update VSCode with the following settings:
 "mypy.runUsingActiveInterpreter": true,
 ```
 
+install requirements
+`pip install -r requirements.txt`
+
 Select the Active Interpreter
 
 - Make sure you select the appropriate Python interpreter in VS Code:
