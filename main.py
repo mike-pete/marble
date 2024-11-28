@@ -1,31 +1,12 @@
-import json
-import requests
-from dotenv import dotenv_values
-from requests.auth import HTTPBasicAuth
-
-env = dotenv_values(".env")
-OXY_USERNAME = env["OXY_USERNAME"]
-OXY_PASSWORD = env["OXY_PASSWORD"]
-
-if type(OXY_USERNAME) is not str or type(OXY_PASSWORD) is not str:
-    raise Exception("Oxylabs credentials not found. Add them to your .env file!")
+from Page import Page
 
 search_text = "vodka"
+url = f"https://www.klwines.com/Products?searchText={search_text}"
+page = Page(url)
+soup = page.soup
 
-url = "https://realtime.oxylabs.io/v1/queries"
-headers = {
-    "Content-Type": "application/json",
-}
-payload = {
-    "source": "universal_ecommerce",
-    "url": f"https://www.klwines.com/Products?searchText={search_text}",
-}
+items = soup.select(".tf-product-content")
 
-response = requests.post(
-    url,
-    auth=HTTPBasicAuth(OXY_USERNAME, OXY_PASSWORD),
-    headers=headers,
-    data=json.dumps(payload),
-)
-
-print(response.text)
+print(len(items))
+print(items[0])
+print(items[0].select("a"))
