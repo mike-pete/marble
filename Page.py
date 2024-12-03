@@ -44,13 +44,11 @@ class Page:
         file_name = hashlib.sha256(url.encode("utf-8")).hexdigest() + ".json"
         file_path = f"{dev_cache_path}/{file_name}"
         file = Path(file_path)
-        print("Looking in cache:", file_path)
         if file.is_file():
             f = open(file_path, "r")
             file_json: ResponseJSON = json.loads(f.read())
             return file_json
 
-        print("Cache miss!")
         return None
 
     def _get_page(self, url: str) -> ResponseJSON:

@@ -1,10 +1,12 @@
+import re
 from pprint import pprint
 from typing import Dict, List, Optional
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from Page import Page
+from utils import get_element_with_text
 
 
 class WineItem(BaseModel):
@@ -13,15 +15,16 @@ class WineItem(BaseModel):
     notes: Optional[str] = None
     sku: Optional[str] = None
     origin: Optional[str] = None
-    type_varietal: Optional[str] = None
-    alcohol_content: Optional[str] = None
+    type_varietal: Optional[str] = Field(None, alias="type/varietal")
+    alcohol_content: Optional[str] = Field(None, alias="alcohol content")
     price: Optional[str] = None
-    # image: Optional[str] = None
+    image: Optional[str] = None
 
-    def __init__(self, base_url: str, path: str) -> None:
+    def __init__(self, product_id: str) -> None:
         super().__init__()
+        base_url = "https://shop.klwines.com"
 
-        url = base_url + path
+        url = f"{base_url}/products/details/{product_id}"
         self.product_link = url
 
         soup = Page(url).soup
@@ -31,8 +34,11 @@ class WineItem(BaseModel):
             image = sections[0].select_one("img")
             if image:
                 srcset = image.get_attribute_list("srcset")
-                if len(srcset):
-                    print(base_url+str(srcset[0]).strip())
+                if srcset:
+                    src = srcset[0]
+                    if src:
+                        src_text = src.split(" ")[-2]
+                        self.image = base_url + src_text
 
             title = sections[0].select_one("h1")
             if title:
@@ -74,22 +80,22 @@ class WineItem(BaseModel):
                                     "alcohol_content",
                                 ]:
                                     if key not in vars(self).keys():
-                                        raise Exception("key is not a property of this class")
+                                        raise Exception(
+                                            "key is not a property of this class"
+                                        )
                                     setattr(self, key, value)
 
                 if self.notes is None:
-                    note = sections[0].select_one('div:has(>div>h3) p')
+                    note = sections[0].select_one("div:has(>div>h3) p")
                     if note:
                         self.notes = note.text.strip()
 
                     # uncomment if you want to use the critic review text as a backup for self.notes
 
-                    # else: 
+                    # else:
                     #     review = sections[0].select_one('div:has(>svg[data-testid="FormatQuoteIcon"])')
                     #     if review:
                     #         self.notes = review.text.strip()
-                    
-                    
 
 
 class WineItems(BaseModel):
@@ -110,26 +116,12 @@ class WineItems(BaseModel):
             if len(links) > 0:
                 split_url = urlsplit(str(links[0]))
 
-                query_params = parse_qs(split_url.query)
-                filtered_query_params = {
-                    key: query_params[key] for key in ["i"] if key in query_params
-                }
+                product_id = parse_qs(split_url.query)["i"][0]
 
-                new_query_string = urlencode(filtered_query_params, doseq=True)
-
-                path = urlunsplit(
-                    (
-                        split_url.scheme,
-                        split_url.netloc,
-                        split_url.path,
-                        new_query_string,
-                        split_url.fragment,
-                    )
-                )
-
-                self.data.append(WineItem(base_url, path))
+                if product_id:
+                    self.data.append(WineItem(product_id))
 
 
 search_text = "vodka"
-data = WineItems(search_text).model_dump()
+data = WineItems(search_text).model_dump(by_alias=True)
 pprint(data, indent=4)
