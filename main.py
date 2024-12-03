@@ -17,7 +17,7 @@ class WineItem(BaseModel):
     origin: Optional[str] = None
     type_varietal: Optional[str] = Field(None, alias="type/varietal")
     alcohol_content: Optional[str] = Field(None, alias="alcohol content")
-    price: Optional[str] = None
+    # price: Optional[str] = None
     image: Optional[str] = None
 
     def __init__(self, product_id: str) -> None:
@@ -28,8 +28,30 @@ class WineItem(BaseModel):
         self.product_link = url
 
         soup = Page(url).soup
-        sections = soup.select("main>section")
 
+        product_details = soup.find(["h2", "h5"], string="Product Details")
+
+        if product_details and product_details.parent:
+            elements = product_details.parent.find_all("p")
+
+            if origin := get_element_with_text(elements, re.compile(r"^origin:", re.IGNORECASE)):
+                if origin:
+                    self.origin = origin.text.split(':')[1].strip()
+
+            if sku := get_element_with_text(elements, re.compile(r"^sku:", re.IGNORECASE)):
+                if sku:
+                    self.sku = sku.text.split(':')[1].strip().replace("#","")
+
+            if alcohol_content := get_element_with_text(elements, re.compile(r"^alcohol content:", re.IGNORECASE)):
+                if alcohol_content:
+                    self.alcohol_content = alcohol_content.text.split(':')[1].strip()
+            
+            if type_varietal := get_element_with_text(elements, re.compile(r"^type/varietal:", re.IGNORECASE)):
+                if type_varietal:
+                    self.type_varietal = type_varietal.text.split(':')[1].strip()
+
+
+        sections = soup.select("main>section")
         if len(sections) == 3:
             image = sections[0].select_one("img")
             if image:
@@ -58,44 +80,10 @@ class WineItem(BaseModel):
                                 note_text = note.text.strip()
                                 self.notes = note_text
 
-                        case "Product Details":
-                            details = block.select("p")
-
-                            for detail in details:
-                                text = detail.text.split(":")
-                                key = (
-                                    text[0]
-                                    .strip()
-                                    .lower()
-                                    .replace(" ", "_")
-                                    .replace("/", "_")
-                                )
-
-                                value = " ".join(text[1:]).strip().replace("#", "")
-
-                                if key in [
-                                    "sku",
-                                    "origin",
-                                    "type_varietal",
-                                    "alcohol_content",
-                                ]:
-                                    if key not in vars(self).keys():
-                                        raise Exception(
-                                            "key is not a property of this class"
-                                        )
-                                    setattr(self, key, value)
-
                 if self.notes is None:
                     note = sections[0].select_one("div:has(>div>h3) p")
                     if note:
                         self.notes = note.text.strip()
-
-                    # uncomment if you want to use the critic review text as a backup for self.notes
-
-                    # else:
-                    #     review = sections[0].select_one('div:has(>svg[data-testid="FormatQuoteIcon"])')
-                    #     if review:
-                    #         self.notes = review.text.strip()
 
 
 class WineItems(BaseModel):
