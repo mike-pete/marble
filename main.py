@@ -25,7 +25,7 @@ class WineItem(BaseModel):
     origin: Optional[str] = None
     type_varietal: Optional[str] = Field(None, alias="type/varietal")
     alcohol_content: Optional[str] = Field(None, alias="alcohol content")
-    # price: Optional[str] = None
+    price: Optional[str] = None
     image: Optional[str] = None
 
     def __init__(self, product_id: str) -> None:
@@ -39,6 +39,10 @@ class WineItem(BaseModel):
 
         if name := soup.select_one("main h1"):
             self.name = name.text.strip()
+
+        if spans := soup.select("span:has(>data)"):
+            if price := get_element_with_regex(spans, r"^price:"):
+                self.price = price.text.split(":")[1].strip()
 
         self._initialize_img(soup, base_url)
         self._initialize_product_details(soup)
