@@ -1,12 +1,20 @@
 import re
 from pprint import pprint
-from typing import Dict, List, Optional
-from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
+from typing import List, Optional
+from urllib.parse import parse_qs, urlsplit
 
+from bs4 import BeautifulSoup, Tag
 from pydantic import BaseModel, Field
 
 from Page import Page
-from utils import get_element_with_text
+
+
+def get_element_with_regex(elements: List[Tag], pattern: str) -> Tag | None:
+    for element in elements:
+        match = re.match(pattern, element.text, re.IGNORECASE)
+        if match:
+            return element
+    return None
 
 
 class WineItem(BaseModel):
@@ -28,28 +36,7 @@ class WineItem(BaseModel):
         self.product_link = url
 
         soup = Page(url).soup
-
-        product_details = soup.find(["h2", "h5"], string="Product Details")
-
-        if product_details and product_details.parent:
-            elements = product_details.parent.find_all("p")
-
-            if origin := get_element_with_text(elements, re.compile(r"^origin:", re.IGNORECASE)):
-                if origin:
-                    self.origin = origin.text.split(':')[1].strip()
-
-            if sku := get_element_with_text(elements, re.compile(r"^sku:", re.IGNORECASE)):
-                if sku:
-                    self.sku = sku.text.split(':')[1].strip().replace("#","")
-
-            if alcohol_content := get_element_with_text(elements, re.compile(r"^alcohol content:", re.IGNORECASE)):
-                if alcohol_content:
-                    self.alcohol_content = alcohol_content.text.split(':')[1].strip()
-            
-            if type_varietal := get_element_with_text(elements, re.compile(r"^type/varietal:", re.IGNORECASE)):
-                if type_varietal:
-                    self.type_varietal = type_varietal.text.split(':')[1].strip()
-
+        self._initialize_product_details(soup)
 
         sections = soup.select("main>section")
         if len(sections) == 3:
@@ -84,6 +71,30 @@ class WineItem(BaseModel):
                     note = sections[0].select_one("div:has(>div>h3) p")
                     if note:
                         self.notes = note.text.strip()
+
+    def _initialize_product_details(self, soup: BeautifulSoup) -> None:
+        product_details = soup.find(["h2", "h5"], string="Product Details")
+
+        if product_details and product_details.parent:
+            elements = product_details.parent.find_all("p")
+
+            if origin := get_element_with_regex(elements, r"^origin:"):
+                if origin:
+                    self.origin = origin.text.split(":")[1].strip()
+
+            if sku := get_element_with_regex(elements, r"^sku:"):
+                if sku:
+                    self.sku = sku.text.split(":")[1].strip().replace("#", "")
+
+            if alcohol_content := get_element_with_regex(
+                elements, r"^alcohol content:"
+            ):
+                if alcohol_content:
+                    self.alcohol_content = alcohol_content.text.split(":")[1].strip()
+
+            if type_varietal := get_element_with_regex(elements, r"^type/varietal:"):
+                if type_varietal:
+                    self.type_varietal = type_varietal.text.split(":")[1].strip()
 
 
 class WineItems(BaseModel):
