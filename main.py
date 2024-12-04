@@ -44,29 +44,22 @@ class WineItem(BaseModel):
             if price := get_element_with_regex(spans, r"^price:"):
                 self.price = price.text.split(":")[1].strip()
 
+        self._initialize_notes(soup)
         self._initialize_img(soup, base_url)
         self._initialize_product_details(soup)
 
-        sections = soup.select("main>section")
-        if len(sections) == 3:
-            for block in sections[1].select("div:has(>h2)"):
-                h2 = block.select_one("h2")
+    def _initialize_notes(self, soup: BeautifulSoup) -> None:
+        if notes_header := get_element_with_regex(
+            soup.select("div:has(>h3)"), r"^notes"
+        ):
+            if notes_header.parent:
+                if notes := notes_header.parent.select_one("p"):
+                    self.notes = notes.text.strip()
 
-                if h2:
-                    label: str = h2.text.strip()
-
-                    match label:
-                        case "Notes":
-                            note = block.select_one("p")
-
-                            if note:
-                                note_text = note.text.strip()
-                                self.notes = note_text
-
-                if self.notes is None:
-                    note = sections[0].select_one("div:has(>div>h3) p")
-                    if note:
-                        self.notes = note.text.strip()
+        if notes_header := get_element_with_regex(soup.select("h2"), r"^notes"):
+            if notes_header.parent:
+                if notes := notes_header.parent.select_one("p"):
+                    self.notes = notes.text.strip()
 
     def _initialize_img(self, soup: BeautifulSoup, base_url: str) -> None:
         if zoom := get_element_with_regex(soup.select("main p"), r"^zoom"):
