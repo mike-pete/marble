@@ -10,8 +10,8 @@ from dotenv import dotenv_values
 from requests.auth import HTTPBasicAuth
 
 ResponseJSON: TypeAlias = Dict[str, List[Dict[str, str]]]
-dev_cache_path = "./.dev_cache"
-env = dotenv_values(".env")
+dev_cache_path = "../.dev_cache"
+env = dotenv_values("../.env")
 
 
 class Page:
