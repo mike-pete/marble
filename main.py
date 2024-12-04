@@ -37,23 +37,14 @@ class WineItem(BaseModel):
 
         soup = Page(url).soup
 
-        name = soup.select_one("main h1")
-        if name:
+        if name := soup.select_one("main h1"):
             self.name = name.text.strip()
 
+        self._initialize_img(soup, base_url)
         self._initialize_product_details(soup)
 
         sections = soup.select("main>section")
         if len(sections) == 3:
-            image = sections[0].select_one("img")
-            if image:
-                srcset = image.get_attribute_list("srcset")
-                if srcset:
-                    src = srcset[0]
-                    if src:
-                        src_text = src.split(" ")[-2]
-                        self.image = base_url + src_text
-
             for block in sections[1].select("div:has(>h2)"):
                 h2 = block.select_one("h2")
 
@@ -72,6 +63,15 @@ class WineItem(BaseModel):
                     note = sections[0].select_one("div:has(>div>h3) p")
                     if note:
                         self.notes = note.text.strip()
+
+    def _initialize_img(self, soup: BeautifulSoup, base_url: str) -> None:
+        if zoom := get_element_with_regex(soup.select("main p"), r"^zoom"):
+            if zoom.parent and zoom.parent.parent:
+                if image := zoom.parent.parent.select_one("img"):
+                    if srcset := image.get_attribute_list("srcset"):
+                        if src := srcset[0]:
+                            src_text = src.split(" ")[-2]
+                            self.image = base_url + src_text
 
     def _initialize_product_details(self, soup: BeautifulSoup) -> None:
         product_details = soup.find(["h2", "h5"], string="Product Details")
