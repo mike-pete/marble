@@ -1,6 +1,6 @@
-from KLWines import WineItem
+from KLWines import KLWineItem
 
-exact_match = WineItem(
+exact_match = KLWineItem(
     **{
         "alcohol content": "40%",
         "image": "https://shop.klwines.com/_next/image?url=https%3A%2F%2Fcdn.klwines.com%2Fimages%2Fskus%2Fgenerated_638431997352028371_1692644x.jpg&w=256&q=75",
@@ -38,9 +38,11 @@ exact_match = WineItem(
     }
 )
 
-notes_mismatch = WineItem(
+mismatch = KLWineItem(
     **{
         **exact_match.model_dump(by_alias=True),
-        "notes": "exotic beverage with fruity overtones and under-toung hints of oreo",
+        "size": "1 Gallon",
+        "name": "Wódka Gin (1gal)",
+        # "name": "Mike's Orange Juice"
     }
 )

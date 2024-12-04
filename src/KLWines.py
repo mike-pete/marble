@@ -16,7 +16,7 @@ def get_element_with_regex(elements: List[Tag], pattern: str) -> Tag | None:
     return None
 
 
-class WineItem(BaseModel):
+class KLWineItem(BaseModel):
     product_link: Optional[str] = None
     name: Optional[str] = None
     notes: Optional[str] = None
@@ -28,7 +28,7 @@ class WineItem(BaseModel):
     image: Optional[str] = None
 
 
-class WineItemFromProductId(WineItem):
+class KLWineItemFromProductId(KLWineItem):
     def __init__(self, product_id: str) -> None:
         super().__init__(
             **{
@@ -110,7 +110,7 @@ class WineItemFromProductId(WineItem):
 
 
 class KLWines(BaseModel):
-    data: List[WineItem] = []
+    data: List[KLWineItem] = []
 
     def __init__(self, search_text: str, limit: int = 10) -> None:
         super().__init__()
@@ -130,4 +130,4 @@ class KLWines(BaseModel):
                 product_id = parse_qs(split_url.query)["i"][0]
 
                 if product_id:
-                    self.data.append(WineItemFromProductId(product_id))
+                    self.data.append(KLWineItemFromProductId(product_id))
