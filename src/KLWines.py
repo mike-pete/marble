@@ -27,8 +27,23 @@ class WineItem(BaseModel):
     price: Optional[str] = None
     image: Optional[str] = None
 
+
+class WineItemFromProductId(WineItem):
     def __init__(self, product_id: str) -> None:
-        super().__init__()
+        super().__init__(
+            **{
+                "product_link": None,
+                "name": None,
+                "notes": None,
+                "sku": None,
+                "origin": None,
+                "type/varietal": None,
+                "alcohol content": None,
+                "price": None,
+                "image": None,
+            }
+        )
+
         base_url = "https://shop.klwines.com"
 
         url = f"{base_url}/products/details/{product_id}"
@@ -115,4 +130,4 @@ class KLWines(BaseModel):
                 product_id = parse_qs(split_url.query)["i"][0]
 
                 if product_id:
-                    self.data.append(WineItem(product_id))
+                    self.data.append(WineItemFromProductId(product_id))
