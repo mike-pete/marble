@@ -36,6 +36,11 @@ class WineItem(BaseModel):
         self.product_link = url
 
         soup = Page(url).soup
+
+        name = soup.select_one("main h1")
+        if name:
+            self.name = name.text.strip()
+
         self._initialize_product_details(soup)
 
         sections = soup.select("main>section")
@@ -48,10 +53,6 @@ class WineItem(BaseModel):
                     if src:
                         src_text = src.split(" ")[-2]
                         self.image = base_url + src_text
-
-            title = sections[0].select_one("h1")
-            if title:
-                self.name = title.text.strip()
 
             for block in sections[1].select("div:has(>h2)"):
                 h2 = block.select_one("h2")
