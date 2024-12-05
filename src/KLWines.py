@@ -5,6 +5,7 @@ from urllib.parse import parse_qs, urlsplit
 from bs4 import BeautifulSoup, Tag
 from pydantic import BaseModel, Field
 
+from openai_client import client
 from Page import Page
 
 
@@ -26,6 +27,58 @@ class KLWineItem(BaseModel):
     alcohol_content: Optional[str] = Field(None, alias="alcohol content")
     price: Optional[str] = None
     image: Optional[str] = None
+
+
+class KLWineItemComparison(BaseModel):
+    sku: Optional[str]
+    brand_match: bool
+    size_match: bool
+    origin_match: bool
+    type_match: bool
+    alcohol_content_match: bool
+
+
+def compare_klwine_items(
+    base_item: KLWineItem, comparison_item: KLWineItem
+) -> KLWineItemComparison | None:
+    base_json = base_item.model_dump_json()
+    comparison_json = comparison_item.model_dump_json()
+
+    completion = client.beta.chat.completions.parse(
+        model="gpt-4o-2024-08-06",
+        messages=[
+            {
+                "role": "system",
+                "content": """
+                    Compare the two items. 
+                    Only return True for fields that you are confident are a strong match. 
+                    Return False if you aren't confident that the fields are a strong match.
+                """,
+            },
+            {
+                "role": "user",
+                "content": """
+                    For the Base Item and the Comparison Item below please do the following:
+                    1. Compare the names, and return True in the brand_match field if you are confident that they do match.
+                    2. Compare the sizes, and return True in the size_match field if you are confident that they do match.
+                    3. Compare the origins, and return True in the origin_match field if you are confident that they do match.
+                    4. Compare the types/varietals, and return True in the type_match field if you are confident that they do match.
+                    5. Compare the "alcohol content", and return True in the alcohol_content_match field if you are confident that they do match.
+                """
+                + "\n\nBase Item:"
+                + base_json
+                + "\n\nComparison Item:"
+                + comparison_json,
+            },
+        ],
+        response_format=KLWineItemComparison,
+    )
+
+    if parsed := completion.choices[0].message.parsed:
+        data = parsed
+        data.sku = base_item.sku
+        return data
+    return None
 
 
 class KLWineItemFromProductId(KLWineItem):
@@ -91,22 +144,18 @@ class KLWineItemFromProductId(KLWineItem):
             elements = product_details.parent.find_all("p")
 
             if origin := get_element_with_regex(elements, r"^origin:"):
-                if origin:
-                    self.origin = origin.text.split(":")[1].strip()
+                self.origin = origin.text.split(":")[1].strip()
 
             if sku := get_element_with_regex(elements, r"^sku:"):
-                if sku:
-                    self.sku = sku.text.split(":")[1].strip().replace("#", "")
+                self.sku = sku.text.split(":")[1].strip().replace("#", "")
 
             if alcohol_content := get_element_with_regex(
                 elements, r"^alcohol content:"
             ):
-                if alcohol_content:
-                    self.alcohol_content = alcohol_content.text.split(":")[1].strip()
+                self.alcohol_content = alcohol_content.text.split(":")[1].strip()
 
             if type_varietal := get_element_with_regex(elements, r"^type/varietal:"):
-                if type_varietal:
-                    self.type_varietal = type_varietal.text.split(":")[1].strip()
+                self.type_varietal = type_varietal.text.split(":")[1].strip()
 
 
 class KLWines(BaseModel):
