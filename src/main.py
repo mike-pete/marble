@@ -6,7 +6,7 @@ from KLWines import KLWineItem, KLWines, compare_klwine_items
 search_text = "vodka"
 number_of_items_to_scrape = 10
 
-print(f"Scraping {number_of_items_to_scrape} \"{search_text}\" Items:\n\n")
+print(f"Scraping {number_of_items_to_scrape} \"{search_text}\" items:\n")
 
 kl_wine_items = KLWines(search_text, limit=number_of_items_to_scrape).model_dump(
     by_alias=True
@@ -15,8 +15,8 @@ kl_wine_items = KLWines(search_text, limit=number_of_items_to_scrape).model_dump
 pprint(kl_wine_items)
 
 
+print("\n\nComparing each scraped item against comparison item:")
 
-print("\n\nComparing Each Scraped Item Against Comparison Item:")
 comparison_item = exact_match
 
 for wine_item in kl_wine_items:

@@ -41,8 +41,7 @@ Run Ruff:
 Running `python main.py` should result in something similar to this:
 
 ```shell
-Scraping 10 "vodka" Items:
-
+Scraping 10 "vodka" items:
 
 [{'alcohol content': '40%',
   'image': 'https://shop.klwines.com/_next/image?url=https%3A%2F%2Fcdn.klwines.com%2Fimages%2Fskus%2Fgenerated_638431997352028371_1692644x.jpg&w=256&q=75',
@@ -174,7 +173,7 @@ Scraping 10 "vodka" Items:
   'type/varietal': 'Vodka'}]
 
 
-Comparing Each Scraped Item Against Comparison Item:
+Comparing each scraped item against comparison item:
 
 
 {'alcohol_content_match': True,
